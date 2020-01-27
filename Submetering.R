@@ -12,7 +12,7 @@ library(hydroTSM) # handle seasons
 library(dplyr)    # data wrangling
 library(tidyr)    # reshaping data
 library(stringr)  # tools for strings
-library(microbenchmark) #to handle 
+library(microbenchmark) 
 library(viridis)
 
 library(RMySQL)
@@ -20,6 +20,7 @@ library(DBI)
 library(lubridate) # tools for handeling time (year,weeks,days etc)
 library(hrbrthemes) #to get more themes in ggplot
 library(reshape2)
+library(plotly) # för att kunna göra tuffa linjer 
 
 
 ## Create a database connection 
@@ -219,11 +220,7 @@ AllYears$remaining_power <- cbind(AllYears$Global_active_power *1000/60 - AllYea
 AllYears$Total_Usage <- cbind(AllYears$remaining_power + AllYears$Sub_metering_1 +
                                 AllYears$Sub_metering_2 + AllYears$Sub_metering_3)
 
-#AllYears$Mean_Day <- AllYears%>%
- # group_by(day)%>%
-#mutate(Mean_day= mean(Total_Usage))
-       
-#AllYears$Mean_Day
+ 
 
 View(AllYears)
 summary(AllYears)
@@ -269,14 +266,9 @@ View(Year2009)
 
 
 
-#Difference among submeterings
-arrange(Sub_metering_1)
-
-
-
 ################ Visualization of submetering over time  ################
 
-# Energu usage per sub_meter every season and year
+# Energy usage per sub_meter every season and year
 AllYears_grouped <- AllYears %>% group_by(year,season) %>% 
   summarise(New_total=sum(Total_Usage),
             New_sub1=sum(Sub_metering_1),
@@ -335,11 +327,100 @@ ggplot(use_day, aes(fill=hour, y=mean_energy_use_day, x=hour)) + geom_bar(positi
 
 
                                                                                                                                           
+################## TASK 2 ####################
 
-################ Summaries ########
-summary(AllYears$Sub_metering_1)
-summary(AllYears$Sub_metering_2)
-summary(AllYears$Sub_metering_3)
-summary(AllYears$Total_Usage)
-summary(AllYears$remaining_power)
 
+## Plot all of sub-meter 1
+plot(AllYears$Sub_metering_1)
+
+## Subset the second week of 2008 - All Observations
+houseWeek <- filter(AllYears, year == 2008 & week == 2)
+
+## Plot subset houseWeek
+plot(houseWeek$Sub_metering_1)
+
+
+### Subset the 9th day of January 2008 - All observations
+houseDay <- filter(AllYears, year == 2008 & month == 1 & day == 9)
+
+
+## Plot sub-meter 1
+plot_ly(houseDay, x = ~houseDay$DateTime, y = ~houseDay$Sub_metering_1, type = 'scatter', mode = 'lines')
+
+######  DAY  #####
+
+## Plot sub-meter 1, 2 and 3 with title, legend and labels - All observations 
+#ställ fråga om varför scatter enkom dyker upp på första raden
+
+plot_ly(houseDay, x = ~houseDay$DateTime, y = ~houseDay$Sub_metering_1, name = 'Kitchen', type = 'scatter', mode = 'lines') %>%
+  add_trace(y = ~houseDay$Sub_metering_2, name = 'Laundry Room', mode = 'lines') %>%
+  add_trace(y = ~houseDay$Sub_metering_3, name = 'Water Heater & AC', mode = 'lines') %>%
+  layout(title = "Power Consumption January 9th, 2008",
+         xaxis = list(title = "Time"),
+         yaxis = list (title = "Power (watt-hours)"))
+
+
+## Subset the 9th day of January 2008 - 10 Minute frequency
+houseDay10 <- filter(AllYears, year == 2008 & month == 1 & day == 9 & (minute == 0 | minute == 10 | minute == 20 | minute == 30 | minute == 40 | minute == 50))
+
+## Plot sub-meter 1, 2 and 3 with title, legend and labels - 10 Minute frequency
+plot_ly(houseDay10, x = ~houseDay10$DateTime, y = ~houseDay10$Sub_metering_1, name = 'Kitchen', type = 'scatter', mode = 'lines') %>%
+  add_trace(y = ~houseDay10$Sub_metering_2, name = 'Laundry Room', mode = 'lines') %>%
+  add_trace(y = ~houseDay10$Sub_metering_3, name = 'Water Heater & AC', mode = 'lines') %>%
+  layout(title = "Power Consumption January 9th, 2008",
+         xaxis = list(title = "Time"),
+         yaxis = list (title = "Power (watt-hours)"))
+
+
+####### WEEK ######
+
+# 6 hour frequency
+houseWeek38 <- filter(AllYears, year == 2008 & week == 38  & (hour == 0 | hour == 6 | hour == 12 | hour == 18 ))
+
+## Plot sub-meter 1, 2 and 3 with title, legend and labels -  6 hour frequency
+plot_ly(houseWeek38, x = ~houseWeek38$DateTime, y = ~houseWeek38$Sub_metering_1, name = 'Kitchen', type = 'scatter', mode = 'lines') %>%
+  add_trace(y = ~houseWeek38$Sub_metering_2, name = 'Laundry Room', mode = 'lines') %>%
+  add_trace(y = ~houseWeek38$Sub_metering_3, name = 'Water Heater & AC', mode = 'lines') %>%
+  layout(title = "Power Consumption of week 38 year 2008",
+         xaxis = list(title = "Days"),
+         yaxis = list (title = "Power (watt-hours)"))
+
+# 3h frequency
+houseWeek38new <- filter(AllYears, year == 2008 & week == 38  & (hour == 0 | hour == 3 | hour == 6 | hour == 12| hour == 15 | hour == 18 | hour ==21))
+
+## Plot sub-meter 1, 2 and 3 with title, legend and labels -  6 hour frequency
+plot_ly(houseWeek38new, x = ~houseWeek38new$DateTime, y = ~houseWeek38new$Sub_metering_1, name = 'Kitchen', type = 'scatter', mode = 'lines') %>%
+  add_trace(y = ~houseWeek38new$Sub_metering_2, name = 'Laundry Room', mode = 'lines') %>%
+  add_trace(y = ~houseWeek38new$Sub_metering_3, name = 'Water Heater & AC', mode = 'lines') %>%
+  layout(title = "Power Consumption of week 38 year 2008",
+         xaxis = list(title = "Days"),
+         yaxis = list (title = "Power (watt-hours)"))
+
+
+####### MONTH ########
+# 6h frequency
+houseSept <- filter(AllYears, year == 2008 & month == 9  & (hour == 0 | hour == 8 | hour == 16))
+
+## Plot sub-meter 1, 2 and 3 with title, legend and labels -  6 hour frequency
+plot_ly(houseSept, x = ~houseSept$DateTime, y = ~houseSept$Sub_metering_1, name = 'Kitchen', type = 'scatter', mode = 'lines') %>%
+  add_trace(y = ~houseSept$Sub_metering_2, name = 'Laundry Room', mode = 'lines') %>%
+  add_trace(y = ~houseSept$Sub_metering_3, name = 'Water Heater & AC', mode = 'lines') %>%
+  layout(title = "Power Consumption of week 38 year 2008",
+         xaxis = list(title = "Days"),
+         yaxis = list (title = "Power (watt-hours)"))
+
+
+# 12h frequency
+houseSept12 <- filter(AllYears, year == 2008 & month == 9  & (hour == 0 | hour == 12))
+
+## Plot sub-meter 1, 2 and 3 with title, legend and labels -  12 hour frequency
+plot_ly(houseSept12, x = ~houseSept12$DateTime, y = ~houseSept12$Sub_metering_1, name = 'Kitchen', type = 'scatter', mode = 'lines') %>%
+  add_trace(y = ~houseSept12$Sub_metering_2, name = 'Laundry Room', mode = 'lines') %>%
+  add_trace(y = ~houseSept12$Sub_metering_3, name = 'Water Heater & AC', mode = 'lines') %>%
+  layout(title = "Power Consumption of week 38 year 2008",
+         xaxis = list(title = "Days"),
+         yaxis = list (title = "Power (watt-hours)"))
+
+
+
+#
