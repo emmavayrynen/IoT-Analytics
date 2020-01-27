@@ -912,6 +912,60 @@ autoplot(MonthHoltFor) +
   guides(colour=guide_legend(title="Series"))
 
 
+#####################################  TSstudio  ################################################
+#Implement the TSstudio package on the same data
+
+#Libraries
+library(TSstudio)
+
+# ARIMA
+fit <- auto.arima(TSmonthTotal)
+
+# Simulate 100 possible forecast path, with horizon of 60 months
+firfor<-forecast_sim(model = fit, h = 6, n = 100)
 
 
+#Plot time serie of total usuage
+ts_plot(TSmonthTotal)
 
+#Heat map of total usuage 
+ts_heatmap(TSmonthTotal)
+plot_error(fniss, error = "MAPE", palette = "Set1")
+
+#Plot forecast of total usage/month 
+plot_forecast(forecastMonthTotal, title = "Forecasted total usuage per month", Xtitle = "Year",
+              Ytitle = "Watt hours", color = "Red", width = 2)
+
+
+### Method copied from TSstudio #########
+
+#Way to create many models in one 
+methods <- list(arima1 = list(method = "arima",
+                              method_arg = list(order = c(2,1,0)),
+                              notes = "ARIMA(2,1,0)"),
+                arima2 = list(method = "arima",
+                              method_arg = list(order = c(2,1,2),
+                                                seasonal = list(order = c(1,1,1))),
+                              notes = "SARIMA(2,1,2)(1,1,1)"),
+                hw = list(method = "HoltWinters",
+                          method_arg = NULL,
+                          notes = "HoltWinters Model"),
+                tslm = list(method = "tslm",
+                            method_arg = list(formula = input ~ trend + season),
+                            notes = "tslm model with trend and seasonal components"))
+
+
+# Training the models with backtesting
+md <- train_model(input = TSmonthTotal,
+                  methods = methods,
+                  train_method = list(partitions = 4,
+                                      sample.out = 12,
+                                      space = 3),
+                  horizon = 12,
+                  error = "MAPE")
+
+#Silumate forecast
+forecast_sim(md, h, n, sim_color = "blue", opacity = 0.05,
+             plot = TRUE)
+
+################################################################################################
